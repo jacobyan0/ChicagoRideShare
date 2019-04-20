@@ -1,5 +1,9 @@
 library(tidyverse)
 library(lubridate)
+library(tidycensus)
+
+####### data prep
+#create simpler column names
 x <- c("ID", 
        "trip_start", 
        "trip_end", 
@@ -21,13 +25,35 @@ x <- c("ID",
        "dropoff_lat",
        "dropoff_lon",
        "dropoff_loc")
+#load trip data
 data <- read_csv("data/Transportation_Network_Providers_-_Trips.csv", col_names = x, skip = 1)
-
-data2 <- sample_n(data, size = 1000000)
 
 #fix format for time columns
 data$trip_start <- mdy_hms(data$trip_start)
 data$trip_end <- mdy_hms(data$trip_end)
+
+#convert tracts to characters
+data <- data %>% 
+  mutate(pickup_tract = as.character(pickup_tract)) %>% 
+  mutate(dropoff_tract = as.character(dropoff_tract))
+
+#get American Community Survey median household income data (table B19013)
+income <- get_acs(geography = "tract", variables = "B19013_001", year = 2017, state = "Illinois", county = "Cook")
+income <- income %>% rename(median_inc = estimate)
+
+
+#join income data to trip data
+data <- data %>% 
+  left_join(income, by = c("pickup_tract" = "GEOID")) %>% 
+  select(-c("variable", "moe", "NAME"))
+
+
+# full dataset is big. create data2 set that samples 1 million observations to quickly test things
+data2 <- sample_n(data, size = 1000000)
+
+
+
+
 
 #trips by hour of the day
 data %>%
