@@ -49,10 +49,16 @@ data <- data %>%
 
 
 # full dataset is big. create data2 set that samples 1 million observations to quickly test things
-data2 <- sample_n(data, size = 1000000)
+data2 <- sample_n(data, size = 100000)
 
-
-
+#select 10 tracts with largest number of pick-ups
+data %>% count(pickup_tract, sort = TRUE) %>%
+  select(pickup_tract) %>%
+  slice(2:11)
+#same for drop-off
+data %>% count(dropoff_tract, sort = TRUE) %>%
+  select(dropoff_tract) %>%
+  slice(2:11)
 
 
 #trips by hour of the day
